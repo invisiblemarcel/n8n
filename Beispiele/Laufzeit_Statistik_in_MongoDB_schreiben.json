@@ -1,0 +1,257 @@
+{
+  "name": "n8n Laufzeit Statistik in MongoDB schreiben",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "68e8a6d2-12fb-41b1-8012-227f85ae18de",
+      "name": "When clicking ‘Test workflow’",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        1080,
+        540
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "execution",
+        "returnAll": true,
+        "filters": {
+          "status": "success"
+        },
+        "options": {
+          "activeWorkflows": false
+        },
+        "requestOptions": {}
+      },
+      "id": "992c814d-3c23-45d3-900c-93e971a16573",
+      "name": "Alle erfolgreichen auto Flows laden",
+      "type": "n8n-nodes-base.n8n",
+      "typeVersion": 1,
+      "position": [
+        1520,
+        540
+      ],
+      "credentials": {
+        "n8nApi": {
+          "id": "2zzSCXoYdpvhxfHB",
+          "name": "n8n account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "40127de7-4203-4770-8668-2748cd977af9",
+              "leftValue": "={{ $json.mode }}",
+              "rightValue": "manual",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            },
+            {
+              "id": "e99492ba-4d6d-43aa-9bf4-a4015e13e0b1",
+              "leftValue": "={{ $json.startedAt }}",
+              "rightValue": "={{ $('Letzte erfolgreiche Ausführung ermitteln').first().json.startedAt }}",
+              "operator": {
+                "type": "dateTime",
+                "operation": "after"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "37038794-a919-4eee-ba29-3292e32e91b1",
+      "name": "Nur Flows nach letzter Ausführung",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        1740,
+        540
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "execution",
+        "operation": "get",
+        "executionId": "={{ $json.id }}",
+        "options": {
+          "activeWorkflows": true
+        },
+        "requestOptions": {}
+      },
+      "id": "26ae014b-1cba-4f29-bd9f-827dbeffde36",
+      "name": "Details zu Flows laden",
+      "type": "n8n-nodes-base.n8n",
+      "typeVersion": 1,
+      "position": [
+        1960,
+        540
+      ],
+      "credentials": {
+        "n8nApi": {
+          "id": "2zzSCXoYdpvhxfHB",
+          "name": "n8n account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "var stepdata = [];\nvar runData = $input.item.json.data.resultData.runData;\nvar runDataKeys = Object.keys(runData);\n\nfor(let counter = 0; counter < runDataKeys.length; counter++) {\n  stepdata.push(\n    {\n      Step: runDataKeys[counter],\n      ExecutionTime: runData[runDataKeys[counter]][0].executionTime\n    }\n  );\n}\n\nreturn {\n    json: {\n      WorkflowName: $input.item.json.workflowData.name,\n      WorkflowID: $input.item.json.workflowId,\n      ExecutionID: $input.item.json.id,\n      Modus: $input.item.json.mode,\n      StartedAt: $input.item.json.startedAt,\n      StoppedAt: $input.item.json.stoppedAt,\n      ExecutionTime: Math.abs(new Date($input.item.json.stoppedAt) - new Date($input.item.json.startedAt)),\n      Steps: stepdata\n    }\n};"
+      },
+      "id": "5c022065-14de-4179-b48c-e89a56bf0161",
+      "name": "Metadaten und Laufzeitdaten extrahieren",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2180,
+        540
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "collection": "n8n.Statistik",
+        "fields": "WorkflowName, WorkflowID, ExecutionID, Modus, StartedAt, StoppedAt, ExecutionTime, Steps",
+        "options": {}
+      },
+      "id": "fb9fa337-7b2a-4f79-a805-d78d5cc1986c",
+      "name": "Daten in MongoDB schreiben",
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1.1,
+      "position": [
+        2400,
+        540
+      ],
+      "credentials": {
+        "mongoDb": {
+          "id": "zIWbhVSqw3Ufggy3",
+          "name": "MongoDB account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "execution",
+        "limit": 1,
+        "filters": {
+          "workflowId": {
+            "__rl": true,
+            "value": "g7YkYFW7Ypt7ToOH",
+            "mode": "list",
+            "cachedResultName": "n8n Statistik erstellen (#g7YkYFW7Ypt7ToOH)"
+          },
+          "status": "success"
+        },
+        "options": {},
+        "requestOptions": {}
+      },
+      "id": "3ea45b5a-739e-4cfa-873c-bde4db3c9c63",
+      "name": "Letzte erfolgreiche Ausführung ermitteln",
+      "type": "n8n-nodes-base.n8n",
+      "typeVersion": 1,
+      "position": [
+        1300,
+        540
+      ],
+      "credentials": {
+        "n8nApi": {
+          "id": "2zzSCXoYdpvhxfHB",
+          "name": "n8n account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Test workflow’": {
+      "main": [
+        [
+          {
+            "node": "Letzte erfolgreiche Ausführung ermitteln",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Alle erfolgreichen auto Flows laden": {
+      "main": [
+        [
+          {
+            "node": "Nur Flows nach letzter Ausführung",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Nur Flows nach letzter Ausführung": {
+      "main": [
+        [
+          {
+            "node": "Details zu Flows laden",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Details zu Flows laden": {
+      "main": [
+        [
+          {
+            "node": "Metadaten und Laufzeitdaten extrahieren",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Metadaten und Laufzeitdaten extrahieren": {
+      "main": [
+        [
+          {
+            "node": "Daten in MongoDB schreiben",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Letzte erfolgreiche Ausführung ermitteln": {
+      "main": [
+        [
+          {
+            "node": "Alle erfolgreichen auto Flows laden",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "b79f7f2d-f3a1-4df0-a234-ae201d7658b4",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "a8c5a4b7cbc9b27c3e58be335dea733bf846e08d81a2bef836b235fc4d23107b"
+  },
+  "id": "g7YkYFW7Ypt7ToOH",
+  "tags": []
+}
