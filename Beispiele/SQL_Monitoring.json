@@ -1,0 +1,490 @@
+{
+  "name": "SQL Monitoring",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "e00adfd7-c6a7-45fe-a328-91f8c3eec95f",
+        "formTitle": "SQLs",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "ODS",
+              "fieldType": "file",
+              "multipleFiles": false,
+              "acceptFileTypes": ".ods",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "088af07f-4ef5-4b95-9a56-9e8d1cad9327",
+      "name": "n8n Form Trigger",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.1,
+      "position": [
+        820,
+        540
+      ],
+      "webhookId": "e00adfd7-c6a7-45fe-a328-91f8c3eec95f"
+    },
+    {
+      "parameters": {
+        "operation": "ods",
+        "binaryPropertyName": "ODS",
+        "options": {}
+      },
+      "id": "8bb8d48b-f7ab-4dea-bb84-0823607413ca",
+      "name": "Extract from File",
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        1020,
+        540
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineAll",
+        "options": {}
+      },
+      "id": "6e128218-1f1b-4ff6-abbc-c3fedce3fbf2",
+      "name": "Merge",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        2380,
+        760
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "fieldsToMatchString": "Titel",
+        "outputDataFrom": "input2",
+        "options": {}
+      },
+      "id": "c3e740ae-7fc9-4ac1-a5a4-78df054a90d8",
+      "name": "Merge1",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        2000,
+        1120
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {}
+          ]
+        }
+      },
+      "id": "787f5480-d039-4041-8f0d-cc2d64f469b5",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        820,
+        740
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "key": "SQLs"
+      },
+      "id": "f3931bc6-7d98-449d-bf59-aefa74196665",
+      "name": "Delete SQLs Config in Redis",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        1220,
+        540
+      ],
+      "credentials": {
+        "redis": {
+          "id": "KqxuiOIuaP0oeFik",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "push",
+        "list": "SQLs",
+        "messageData": "={{ $json.toJsonString() }}"
+      },
+      "id": "c79ea351-ac06-472a-86b1-314a9887d09f",
+      "name": "Push SQLs to Redis",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        1420,
+        540
+      ],
+      "credentials": {
+        "redis": {
+          "id": "KqxuiOIuaP0oeFik",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "propertyName": "SQLs",
+        "key": "SQLs",
+        "options": {}
+      },
+      "id": "dc05d9b5-1b0c-4586-8353-148ca46e6fc5",
+      "name": "Load SQLs Config from Redis",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        1020,
+        740
+      ],
+      "credentials": {
+        "redis": {
+          "id": "KqxuiOIuaP0oeFik",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "SQLs",
+        "options": {}
+      },
+      "id": "5e3b0b7b-bebc-4736-8e25-b88b38d6795f",
+      "name": "Split SQLs",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        1240,
+        740
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "37dd1375-f24f-4a7f-9db1-1a6015f40644",
+              "name": "Titel",
+              "value": "={{ $json.SQLs.parseJson().Titel }}",
+              "type": "string"
+            },
+            {
+              "id": "fc4297f9-ff25-4315-8019-fd72eff6f21c",
+              "name": "Beschreibung",
+              "value": "={{ $json.SQLs.parseJson().Beschreibung }}",
+              "type": "string"
+            },
+            {
+              "id": "96e743b8-a51a-4d31-a264-51d1c2b32f40",
+              "name": "SQL",
+              "value": "={{ $json.SQLs.parseJson().SQL }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "bbe05840-22f9-4169-9709-59cfff53e98d",
+      "name": "Get Settings from Object List",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1440,
+        740
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT '{{ $json.Titel }}' AS Titel, *\nFROM (\n  {{ $json.SQL }}\n) AS tab"
+      },
+      "id": "aec99e33-1eea-4998-9301-5f73a2ceb835",
+      "name": "Run SQLs in MS SQL",
+      "type": "n8n-nodes-base.microsoftSql",
+      "typeVersion": 1.1,
+      "position": [
+        1640,
+        740
+      ],
+      "credentials": {
+        "microsoftSql": {
+          "id": "Q2gvGs1rKU3uCUNB",
+          "name": "Microsoft SQL AdventureWorks2022"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f28b2625-064a-4de6-b7ff-d0cf6c70815e",
+              "name": "Daten",
+              "value": "={{ $json.table }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "4fd62e66-0cc9-4b17-9b04-4a4c1d5f6f7d",
+      "name": "Rename Table",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2060,
+        740
+      ]
+    },
+    {
+      "parameters": {
+        "fieldsToSummarize": {
+          "values": [
+            {
+              "field": "Titel"
+            }
+          ]
+        },
+        "fieldsToSplitBy": "Titel",
+        "options": {}
+      },
+      "id": "e30c73c5-4e92-483b-b460-997db22d5e87",
+      "name": "Get all SQLs name that have Results",
+      "type": "n8n-nodes-base.summarize",
+      "typeVersion": 1,
+      "position": [
+        1840,
+        920
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "convertToHtmlTable",
+        "options": {}
+      },
+      "id": "e4f273bc-8a10-4274-a1a1-7f996a75cb2c",
+      "name": "SQLs details to HTML table",
+      "type": "n8n-nodes-base.html",
+      "typeVersion": 1.2,
+      "position": [
+        2200,
+        1120
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "convertToHtmlTable",
+        "options": {}
+      },
+      "id": "9f061bdc-9c4d-48f1-ab44-1fb568675e80",
+      "name": "Results to HTML table",
+      "type": "n8n-nodes-base.html",
+      "typeVersion": 1.2,
+      "position": [
+        1840,
+        740
+      ]
+    },
+    {
+      "parameters": {
+        "html": "<!DOCTYPE html>\n\n<html>\n<head>\n  <meta charset=\"UTF-8\" />\n</head>\n<body>\n  {{ $json.table }}\n  <p></p>\n  {{ $json.Daten }}\n</body>\n</html>\n\n<style>\n\ntable, th, td {\n  border: 1px solid;\n  padding: 15px;\n  text-align: center;\n}\n  \n</style>"
+      },
+      "id": "ddacc0d9-2c52-4d38-8745-6672917fd609",
+      "name": "Generate HTML",
+      "type": "n8n-nodes-base.html",
+      "typeVersion": 1.2,
+      "position": [
+        2580,
+        760
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "n8n Form Trigger": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "Delete SQLs Config in Redis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Generate HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge1": {
+      "main": [
+        [
+          {
+            "node": "SQLs details to HTML table",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Load SQLs Config from Redis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete SQLs Config in Redis": {
+      "main": [
+        [
+          {
+            "node": "Push SQLs to Redis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load SQLs Config from Redis": {
+      "main": [
+        [
+          {
+            "node": "Split SQLs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split SQLs": {
+      "main": [
+        [
+          {
+            "node": "Get Settings from Object List",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Settings from Object List": {
+      "main": [
+        [
+          {
+            "node": "Run SQLs in MS SQL",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Run SQLs in MS SQL": {
+      "main": [
+        [
+          {
+            "node": "Results to HTML table",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get all SQLs name that have Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Rename Table": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get all SQLs name that have Results": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SQLs details to HTML table": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Results to HTML table": {
+      "main": [
+        [
+          {
+            "node": "Rename Table",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "90fc4511-7c85-4d45-842b-251d823bbf7a",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "a8c5a4b7cbc9b27c3e58be335dea733bf846e08d81a2bef836b235fc4d23107b"
+  },
+  "id": "wScS3XoaRj4K6i11",
+  "tags": []
+}
